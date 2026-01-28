@@ -469,30 +469,24 @@
       <div class="card setup-card">
         <div class="card-header">
           <span class="badge">Setup</span>
-          <h2 class="card-title">Load Audio Files</h2>
+          <h2 class="card-title">Audio Samples</h2>
         </div>
-        <p class="card-desc">Select the folder containing your TTS audio samples to begin the tests.</p>
+        <p class="card-desc">Audio files are loaded automatically. Select a theme to begin the tests.</p>
         
-        <div class="file-input-wrapper">
-          <label class="file-label" for="audioFolder">
-            📁 Select Audio Folder
-          </label>
-          <input type="file" id="audioFolder" webkitdirectory directory multiple accept=".wav,audio/*">
-          <span class="file-status" id="fileStatus">No files loaded</span>
-        </div>
-        
-        <div style="margin-top: 20px;">
-          <label style="font-weight: 500; margin-right: 12px;">Theme:</label>
-          <select class="theme-select" id="themeSelect">
-            <option value="sent01">Theme 1: Sun</option>
-            <option value="sent02">Theme 2: Chess</option>
-            <option value="sent03">Theme 3: Winter</option>
-          </select>
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <div>
+            <label style="font-weight: 500; margin-right: 12px;">Theme:</label>
+            <select class="theme-select" id="themeSelect">
+              <option value="sent01">Theme 1: Sun</option>
+              <option value="sent02">Theme 2: Chess</option>
+              <option value="sent03">Theme 3: Winter</option>
+            </select>
+          </div>
+          <span class="file-status" id="fileStatus" style="color: var(--success);">✓ 72 audio files ready</span>
         </div>
         
-        <div class="info-box">
-          💡 <strong>Tip:</strong> Audio files should follow the naming pattern: 
-          <code>sent01_formal_clear_female_res.wav</code>
+        <div class="info-box" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46;">
+          ✅ <strong>Ready!</strong> Navigate to any test tab to begin. Audio samples will play directly from the server.
         </div>
       </div>
       
@@ -839,28 +833,28 @@
       });
     }
 
-    // ========== File Loading ==========
-    function initFileLoader() {
-      const fileInput = document.getElementById('audioFolder');
-      const fileStatus = document.getElementById('fileStatus');
-      const themeSelect = document.getElementById('themeSelect');
-
-      fileInput.addEventListener('change', (e) => {
-        const files = Array.from(e.target.files).filter(f => 
-          f.name.endsWith('.wav') || f.type.startsWith('audio/')
-        );
-        
-        state.audioFiles = {};
-        files.forEach(file => {
-          state.audioFiles[file.name.replace('.wav', '')] = file;
+    // ========== File Loading (Auto-load from server) ==========
+    const AUDIO_BASE_PATH = 'timeless_test/';
+    
+    // Generate all possible file keys
+    const ALL_FILE_KEYS = [];
+    ['sent01', 'sent02', 'sent03'].forEach(theme => {
+      ['formal', 'informal'].forEach(register => {
+        ['clear', 'spont'].forEach(style => {
+          ['male', 'female', 'amb'].forEach(voice => {
+            ['res', 'nonres'].forEach(resonance => {
+              ALL_FILE_KEYS.push(`${theme}_${register}_${style}_${voice}_${resonance}`);
+            });
+          });
         });
-        
-        const count = Object.keys(state.audioFiles).length;
-        fileStatus.textContent = `${count} audio files loaded`;
-        fileStatus.style.color = count > 0 ? 'var(--success)' : 'var(--text-muted)';
-        
-        updateAllFileLabels();
       });
+    });
+
+    function initFileLoader() {
+      const themeSelect = document.getElementById('themeSelect');
+      
+      // Auto-initialize on load
+      updateAllFileLabels();
 
       themeSelect.addEventListener('change', (e) => {
         state.theme = e.target.value;
@@ -872,15 +866,15 @@
       return `${state.theme}_${suffix}`;
     }
 
-    function getAudioFile(suffix) {
+    function getAudioUrl(suffix) {
       const key = getFileKey(suffix);
-      return state.audioFiles[key] || null;
+      return `${AUDIO_BASE_PATH}${key}.wav`;
     }
 
     function updateAllFileLabels() {
       // MOS
       const mosFile = getFileKey(testConfig.mos.sample);
-      document.getElementById('mosFile').textContent = state.audioFiles[mosFile] ? mosFile : '(file not found)';
+      document.getElementById('mosFile').textContent = mosFile;
       
       // CMOS
       document.getElementById('cmosFileA').textContent = `A: ${getFileKey(testConfig.cmos.sampleA)}`;
@@ -905,9 +899,9 @@
     }
 
     // ========== Audio Playback ==========
-    async function playAudio(file, applyLowPass = false) {
-      if (!file) {
-        alert('Audio file not found. Please load the audio folder first.');
+    async function playAudio(url, applyLowPass = false) {
+      if (!url) {
+        alert('Audio file not found.');
         return;
       }
       
@@ -918,7 +912,9 @@
       }
       
       try {
-        const arrayBuffer = await file.arrayBuffer();
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch audio');
+        const arrayBuffer = await response.arrayBuffer();
         const audioBuffer = await state.audioContext.decodeAudioData(arrayBuffer);
         
         state.currentSource = state.audioContext.createBufferSource();
@@ -937,7 +933,7 @@
         state.currentSource.start();
       } catch (err) {
         console.error('Audio playback error:', err);
-        alert('Error playing audio file.');
+        alert('Error playing audio file. Check console for details.');
       }
     }
 
@@ -963,7 +959,7 @@
       });
       
       document.getElementById('mosPlay').addEventListener('click', () => {
-        playAudio(getAudioFile(testConfig.mos.sample));
+        playAudio(getAudioUrl(testConfig.mos.sample));
       });
       
       document.getElementById('mosStop').addEventListener('click', stopAudio);
@@ -999,11 +995,11 @@
       });
       
       document.getElementById('cmosPlayA').addEventListener('click', () => {
-        playAudio(getAudioFile(testConfig.cmos.sampleA));
+        playAudio(getAudioUrl(testConfig.cmos.sampleA));
       });
       
       document.getElementById('cmosPlayB').addEventListener('click', () => {
-        playAudio(getAudioFile(testConfig.cmos.sampleB));
+        playAudio(getAudioUrl(testConfig.cmos.sampleB));
       });
       
       document.getElementById('cmosStop').addEventListener('click', stopAudio);
@@ -1040,11 +1036,11 @@
       });
       
       document.getElementById('abPlayA').addEventListener('click', () => {
-        playAudio(getAudioFile(testConfig.ab.sampleA));
+        playAudio(getAudioUrl(testConfig.ab.sampleA));
       });
       
       document.getElementById('abPlayB').addEventListener('click', () => {
-        playAudio(getAudioFile(testConfig.ab.sampleB));
+        playAudio(getAudioUrl(testConfig.ab.sampleB));
       });
       
       document.getElementById('abStop').addEventListener('click', stopAudio);
@@ -1084,11 +1080,11 @@
       });
       
       document.getElementById('abxPlayA').addEventListener('click', () => {
-        playAudio(getAudioFile(testConfig.abx.sampleA));
+        playAudio(getAudioUrl(testConfig.abx.sampleA));
       });
       
       document.getElementById('abxPlayB').addEventListener('click', () => {
-        playAudio(getAudioFile(testConfig.abx.sampleB));
+        playAudio(getAudioUrl(testConfig.abx.sampleB));
       });
       
       document.getElementById('abxPlayX').addEventListener('click', () => {
@@ -1096,7 +1092,7 @@
         const suffix = state.abxAnswer === 'A' 
           ? testConfig.abx.sampleA 
           : testConfig.abx.sampleB;
-        playAudio(getAudioFile(suffix));
+        playAudio(getAudioUrl(suffix));
       });
       
       document.getElementById('abxStop').addEventListener('click', stopAudio);
@@ -1127,7 +1123,7 @@
     // ========== MUSHRA Test ==========
     function initMUSHRA() {
       document.getElementById('mushraPlayRef').addEventListener('click', () => {
-        playAudio(getAudioFile(testConfig.mushra.reference));
+        playAudio(getAudioUrl(testConfig.mushra.reference));
       });
       
       document.getElementById('mushraStop').addEventListener('click', stopAudio);
@@ -1179,7 +1175,7 @@
     }
 
     function playMushraAudio(suffix, isAnchor) {
-      playAudio(getAudioFile(suffix), isAnchor);
+      playAudio(getAudioUrl(suffix), isAnchor);
     }
 
     // ========== Best-Worst Test ==========
@@ -1234,7 +1230,7 @@
     }
 
     function playBWAudio(suffix) {
-      playAudio(getAudioFile(suffix));
+      playAudio(getAudioUrl(suffix));
     }
 
     function selectBW(key, type, btn) {
