@@ -4,7 +4,7 @@ Interactive web demo of 6 common subjective evaluation methods for Text-to-Speec
 
 ## 🎧 Live Demo
 
-Visit: **[Your GitHub Pages URL]**
+Visit: **[https://shreeharsha-bs.github.io/tts-listening-tests/](https://shreeharsha-bs.github.io/tts-listening-tests/)**
 
 ## Test Types
 
