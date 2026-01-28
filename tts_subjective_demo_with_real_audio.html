@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TTS Subjective Test Mini Demo (1 trial each)</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    body { margin: 24px; max-width: 980px; }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    .muted { color: #555; margin: 0 0 18px; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin: 14px 0; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    button { padding: 8px 12px; border-radius: 10px; border: 1px solid #bbb; background: #fff; cursor: pointer; }
+    button:hover { background: #f6f6f6; }
+    button.primary { border-color: #333; }
+    .pill { display:inline-block; padding: 3px 10px; border-radius: 999px; background:#f1f1f1; border:1px solid #e3e3e3; font-size: 12px; }
+    .choices button { min-width: 56px; }
+    .scale { display:flex; gap: 8px; flex-wrap: wrap; }
+    .scale label { display:flex; align-items:center; gap: 6px; border:1px solid #ddd; padding: 6px 10px; border-radius: 10px; }
+    .hr { height: 1px; background: #eee; margin: 12px 0; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; white-space: pre-wrap; }
+    input[type="range"] { width: 240px; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { padding: 6px 8px; border-bottom: 1px solid #eee; text-align: left; }
+    .right { text-align:right; }
+    .hidden { display:none; }
+  </style>
+</head>
+<body>
+  <h1>TTS Subjective Tests — 1 Trial Each (Web Demo)</h1>
+  <p class="muted">
+    Click “Enable Audio” first. Then run each section once. Results are collected at the bottom as JSON.
+  </p>
+
+  <div class="card">
+    <div class="row">
+      <button id="enableAudio" class="primary">Enable Audio</button>
+      <span id="audioStatus" class="pill">Audio: not enabled</span>
+      <button id="resetAll">Reset</button>
+    </div>
+    <p class="muted" style="margin-top:10px;">
+      This demo uses synthetic signals to demonstrate the mechanics (replace with real TTS clips later).
+    </p>
+  </div>
+
+
+  <div class="card" id="filesCard">
+    <div class="row">
+      <label class="pill" for="filePicker">Load audio</label>
+      <input id="filePicker" type="file" accept=".wav,audio/wav" multiple webkitdirectory directory />
+      <span id="fileStatus" class="pill">No files loaded</span>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <span class="pill">Theme</span>
+      <select id="themeSelect">
+        <option value="sent01">Theme 1 (sun)</option>
+        <option value="sent02">Theme 2 (chess)</option>
+        <option value="sent03">Theme 3 (winter)</option>
+      </select>
+      <label class="pill" style="display:flex; gap:8px; align-items:center;">
+        <input id="showLabels" type="checkbox" />
+        Show filenames
+      </label>
+    </div>
+    <p class="muted" style="margin-top:10px;">
+      Tip: select the whole folder that contains the WAV files. This page will map them to each test automatically.
+    </p>
+  </div>
+
+  <!-- MOS -->
+  <div class="card" id="mosCard">
+    <div class="row">
+      <span class="pill">Test 1</span><strong>MOS</strong>
+      <span class="muted">Rate naturalness (1–5)</span>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <button data-play="mos" class="primary">Play sample</button>
+      <button data-stop>Stop</button>
+    </div>
+    <div class="hr"></div>
+    <div class="scale choices" id="mosChoices"></div>
+    <div class="row" style="margin-top:10px;">
+      <button data-submit="mos">Submit MOS</button>
+      <span id="mosDone" class="pill hidden">Recorded</span>
+    </div>
+  </div>
+
+  <!-- CMOS -->
+  <div class="card" id="cmosCard">
+    <div class="row">
+      <span class="pill">Test 2</span><strong>CMOS</strong>
+      <span class="muted">Compare A vs B (−3…+3)</span>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <button data-play="cmosA" class="primary">Play A</button>
+      <button data-play="cmosB" class="primary">Play B</button>
+      <button data-stop>Stop</button>
+    </div>
+    <div class="hr"></div>
+    <div class="scale choices" id="cmosChoices"></div>
+    <div class="row" style="margin-top:10px;">
+      <button data-submit="cmos">Submit CMOS</button>
+      <span id="cmosDone" class="pill hidden">Recorded</span>
+    </div>
+  </div>
+
+  <!-- AB -->
+  <div class="card" id="abCard">
+    <div class="row">
+      <span class="pill">Test 3</span><strong>AB</strong>
+      <span class="muted">Forced choice: which sounds better?</span>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <button data-play="abA" class="primary">Play A</button>
+      <button data-play="abB" class="primary">Play B</button>
+      <button data-stop>Stop</button>
+    </div>
+    <div class="hr"></div>
+    <div class="row choices">
+      <button data-ab="A">Choose A</button>
+      <button data-ab="B">Choose B</button>
+      <span id="abChoice" class="pill hidden"></span>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <button data-submit="ab">Submit AB</button>
+      <span id="abDone" class="pill hidden">Recorded</span>
+    </div>
+  </div>
+
+  <!-- ABX -->
+  <div class="card" id="abxCard">
+    <div class="row">
+      <span class="pill">Test 4</span><strong>ABX</strong>
+      <span class="muted">Is X the same as A or B?</span>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <button data-play="abxA" class="primary">Play A</button>
+      <button data-play="abxB" class="primary">Play B</button>
+      <button data-play="abxX" class="primary">Play X</button>
+      <button data-stop>Stop</button>
+      <span id="abxHint" class="pill">X is randomly A or B</span>
+    </div>
+    <div class="hr"></div>
+    <div class="row choices">
+      <button data-abx="A">X = A</button>
+      <button data-abx="B">X = B</button>
+      <span id="abxChoice" class="pill hidden"></span>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <button data-submit="abx">Submit ABX</button>
+      <span id="abxDone" class="pill hidden">Recorded</span>
+    </div>
+  </div>
+
+  <!-- MUSHRA -->
+  <div class="card" id="mushraCard">
+    <div class="row">
+      <span class="pill">Test 5</span><strong>MUSHRA</strong>
+      <span class="muted">Rate multiple systems (0–100), includes hidden reference + low anchor</span>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <button id="mushraRandomize" class="primary">Randomize order</button>
+      <button data-stop>Stop</button>
+      <span id="mushraOrder" class="pill">Order randomized</span>
+    </div>
+    <div class="hr"></div>
+    <table id="mushraTable">
+      <thead>
+        <tr>
+          <th>Stimulus</th>
+          <th class="right">Play</th>
+          <th class="right">Score</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="row" style="margin-top:10px;">
+      <button data-submit="mushra">Submit MUSHRA</button>
+      <span id="mushraDone" class="pill hidden">Recorded</span>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card">
+    <div class="row">
+      <strong>Collected results</strong>
+      <button id="copyJson">Copy JSON</button>
+      <button id="downloadJson">Download JSON</button>
+    </div>
+    <div class="hr"></div>
+    <div id="jsonOut" class="mono">{}</div>
+  </div>
+
+<script>
+(() => {
+  // -----------------------------
+  // Minimal WebAudio signal setup
+  // -----------------------------
+  let audioCtx = null;
+  let currentNodes = [];
+  const audioEl = new Audio();
+  audioEl.preload = "auto";
+  let objectUrlCache = new Map();
+  let fileByCond = new Map();
+  let metaByName = new Map();
+  let currentTheme = "sent01";
+  let showFilenames = false;
+  const state = {
+    mos: null,
+    cmos: null,
+    ab: { choice: null },
+    abx: { xIs: (Math.random() < 0.5 ? "A" : "B"), choice: null },
+    mushra: { order: [], scores: {} }
+  };
+
+  // Simple synthetic "samples" (replace with TTS audio files later).
+  // Each returns {start(), stop()} that plays ~2 seconds.
+  function makeSample({ baseFreq=160, wobble=0, noise=0, bandpass=0, gain=0.15 }) {
+    if (!audioCtx) throw new Error("Audio not enabled.");
+
+    const osc = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    const mix = audioCtx.createGain();
+    mix.gain.value = 1.0;
+
+    // Gentle amplitude envelope
+    const env = audioCtx.createGain();
+    env.gain.value = 0.0;
+
+    // Optional filter for "muffled" anchor effect
+    let filt = null;
+    if (bandpass > 0) {
+      filt = audioCtx.createBiquadFilter();
+      filt.type = "bandpass";
+      filt.frequency.value = bandpass;
+      filt.Q.value = 1.2;
+    }
+
+    osc.type = "sawtooth";
+    osc2.type = "sine";
+    osc.frequency.value = baseFreq;
+    osc2.frequency.value = baseFreq * 2;
+
+    // Add slow wobble to hint at "prosody-ish" variation
+    const lfo = audioCtx.createOscillator();
+    const lfoGain = audioCtx.createGain();
+    lfo.type = "sine";
+    lfo.frequency.value = 3.2;
+    lfoGain.gain.value = wobble;
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+    lfoGain.connect(osc2.frequency);
+
+    // Noise bed to simulate "roughness"
+    const noiseNode = audioCtx.createBufferSource();
+    const noiseBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
+    const data = noiseBuf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
+    noiseNode.buffer = noiseBuf;
+    noiseNode.loop = false;
+
+    const noiseGain = audioCtx.createGain();
+    noiseGain.gain.value = noise;
+
+    // Mix
+    g.gain.value = gain;
+    osc.connect(g);
+    osc2.connect(g);
+    g.connect(mix);
+
+    noiseNode.connect(noiseGain);
+    noiseGain.connect(mix);
+
+    // Route
+    const out = filt ? filt : env;
+    if (filt) {
+      mix.connect(filt);
+      filt.connect(env);
+    } else {
+      mix.connect(env);
+    }
+    env.connect(audioCtx.destination);
+
+    function start() {
+      stopAll();
+      currentNodes = [osc, osc2, lfo, noiseNode, g, mix, env];
+      if (filt) currentNodes.push(filt);
+
+      const now = audioCtx.currentTime;
+      env.gain.cancelScheduledValues(now);
+      env.gain.setValueAtTime(0.0, now);
+      env.gain.linearRampToValueAtTime(1.0, now + 0.03);
+      env.gain.linearRampToValueAtTime(0.0, now + 2.0);
+
+      osc.start(now);
+      osc2.start(now);
+      lfo.start(now);
+      noiseNode.start(now);
+
+      // Auto stop after 2.1s
+      setTimeout(() => stopAll(), 2100);
+    }
+
+    function stop() {
+      stopAll();
+    }
+
+    return { start, stop };
+  }
+
+  function stopAll() {
+    // Stop HTML audio playback (real samples)
+    try { audioEl.pause(); audioEl.currentTime = 0; } catch {}
+    // Stop WebAudio synthetic playback
+    if (!audioCtx) return;
+    currentNodes.forEach(n => {
+      try { if (typeof n.stop === "function") n.stop(); } catch {}
+      try { if (typeof n.disconnect === "function") n.disconnect(); } catch {}
+    });
+    
+  // -----------------------------
+  // Real WAV samples (loaded from local folder)
+  // -----------------------------
+  function parseWavName(filename) {
+    // Expected: sent03_formal_clear_amb_res.wav
+    const base = filename.split("/").pop();
+    const m = base.match(/^(sent\d+)_(formal|informal)_(clear|spont)_(male|female|amb)_(res|nonres)\.wav$/i);
+    if (!m) return null;
+    return { name: base, sent: m[1].toLowerCase(), formality: m[2].toLowerCase(), delivery: m[3].toLowerCase(),
+             voice: m[4].toLowerCase(), resonance: m[5].toLowerCase() };
+  }
+
+  function condKey(meta) {
+    return `${meta.sent}_${meta.formality}_${meta.delivery}_${meta.voice}_${meta.resonance}`;
+  }
+
+  function setFileStatus(text, ok=false) {
+    const el = document.getElementById("fileStatus");
+    if (!el) return;
+    el.textContent = text;
+    el.style.background = ok ? "#eef8ee" : "#f1f1f1";
+    el.style.borderColor = ok ? "#cfe9cf" : "#e3e3e3";
+  }
+
+  function loadFiles(fileList) {
+    fileByCond = new Map();
+    metaByName = new Map();
+    objectUrlCache = new Map();
+
+    let count = 0;
+    for (const f of fileList) {
+      if (!f.name.toLowerCase().endsWith(".wav")) continue;
+      const meta = parseWavName(f.webkitRelativePath || f.name);
+      if (!meta) continue;
+      metaByName.set(meta.name, meta);
+      fileByCond.set(condKey(meta), f);
+      count++;
+    }
+    if (count === 0) {
+      setFileStatus("No matching WAV files found", false);
+    } else {
+      setFileStatus(`Loaded ${count} WAV files`, true);
+    }
+    updateDisplayedLabels();
+    renderJson();
+  }
+
+  function pickFile(criteria) {
+    const key = `${criteria.sent}_${criteria.formality}_${criteria.delivery}_${criteria.voice}_${criteria.resonance}`;
+    return fileByCond.get(key) || null;
+  }
+
+  function getObjectUrl(file) {
+    if (!file) return null;
+    if (objectUrlCache.has(file)) return objectUrlCache.get(file);
+    const url = URL.createObjectURL(file);
+    objectUrlCache.set(file, url);
+    return url;
+  }
+
+  function resolvedFilenameForTestKey(testKey) {
+    const sent = currentTheme;
+
+    // Define a meaningful mapping for classroom demo (timelessness theme)
+    const choose = (formality, delivery, voice, resonance) =>
+      pickFile({ sent, formality, delivery, voice, resonance });
+
+    let file = null;
+    switch (testKey) {
+      case "mos":
+        file = choose("formal","clear","amb","res");
+        break;
+
+      case "cmosA": // A = resonant
+        file = choose("formal","clear","amb","res");
+        break;
+      case "cmosB": // B = non-resonant
+        file = choose("formal","clear","amb","nonres");
+        break;
+
+      case "abA": // A = formal (hypothesis)
+        file = choose("formal","clear","amb","res");
+        break;
+      case "abB": // B = informal
+        file = choose("informal","clear","amb","res");
+        break;
+
+      case "abxA": // A = male
+        file = choose("formal","clear","male","res");
+        break;
+      case "abxB": // B = ambiguous
+        file = choose("formal","clear","amb","res");
+        break;
+      case "abxX": // X = randomly A or B
+        file = (state.abx.xIs === "A") ? resolvedFilenameForTestKey("abxA") : resolvedFilenameForTestKey("abxB");
+        return file;
+
+      // MUSHRA set (5 items)
+      case "ref":   // "best" candidate for timelessness
+        file = choose("formal","clear","amb","res");
+        break;
+      case "sys1":  // voice type variation (male)
+        file = choose("formal","clear","male","res");
+        break;
+      case "sys2":  // wording formality variation
+        file = choose("informal","clear","amb","res");
+        break;
+      case "sys3":  // delivery variation (spontaneous)
+        file = choose("formal","spont","amb","res");
+        break;
+      case "anch":  // "least timeless" anchor candidate
+        file = choose("informal","spont","female","nonres");
+        break;
+
+      default:
+        return null;
+    }
+    return file;
+  }
+
+  function playRealSampleForKey(testKey) {
+    const file = resolvedFilenameForTestKey(testKey);
+    if (!file) return false;
+    const url = getObjectUrl(file);
+    if (!url) return false;
+    stopAll();
+    audioEl.src = url;
+    audioEl.play().catch(() => {});
+    return true;
+  }
+
+  function updateDisplayedLabels() {
+    // Show/hide small filename hints under play buttons (only for teaching)
+    document.querySelectorAll("[data-play]").forEach(btn => {
+      const key = btn.getAttribute("data-play");
+      const existing = btn.parentElement.querySelector(".filehint");
+      if (existing) existing.remove();
+
+      if (!showFilenames) return;
+
+      const file = resolvedFilenameForTestKey(key);
+      const hint = document.createElement("div");
+      hint.className = "muted filehint";
+      hint.style.fontSize = "12px";
+      hint.style.marginTop = "4px";
+      hint.textContent = file ? (file.name || "(file)") : "(no file mapped)";
+      btn.parentElement.appendChild(hint);
+    });
+  }
+
+currentNodes = [];
+  }
+
+  // -----------------------------
+  // Demo sample definitions
+  // -----------------------------
+  function sampleFor(key) {
+    // If real WAVs are loaded and mapped, play those. Otherwise fall back to synthetic demo sounds.
+    const hasReal = fileByCond && fileByCond.size > 0;
+    if (hasReal) {
+      const ok = playRealSampleForKey(key);
+      if (ok) {
+        return { start: () => {}, stop: () => stopAll() };
+      }
+    }
+    // Synthetic fallback
+    switch (key) {
+      // MOS: one sample
+      case "mos":   return makeSample({ baseFreq: 170, wobble: 8, noise: 0.015, gain: 0.16 });
+
+      // CMOS: A vs B
+      case "cmosA": return makeSample({ baseFreq: 165, wobble: 6, noise: 0.010, gain: 0.16 });
+      case "cmosB": return makeSample({ baseFreq: 165, wobble: 2, noise: 0.030, gain: 0.16 });
+
+      // AB: A vs B
+      case "abA":   return makeSample({ baseFreq: 155, wobble: 7, noise: 0.012, gain: 0.16 });
+      case "abB":   return makeSample({ baseFreq: 155, wobble: 1, noise: 0.028, gain: 0.16 });
+
+      // ABX: A, B, X (X is randomly A or B)
+      case "abxA":  return makeSample({ baseFreq: 180, wobble: 7, noise: 0.010, gain: 0.16 });
+      case "abxB":  return makeSample({ baseFreq: 180, wobble: 2, noise: 0.030, gain: 0.16 });
+      case "abxX":  return (state.abx.xIs === "A") ? sampleFor("abxA") : sampleFor("abxB");
+
+      // MUSHRA stimuli
+      case "sys1":  return makeSample({ baseFreq: 160, wobble: 7, noise: 0.012, gain: 0.16 });
+      case "sys2":  return makeSample({ baseFreq: 160, wobble: 4, noise: 0.018, gain: 0.16 });
+      case "sys3":  return makeSample({ baseFreq: 160, wobble: 2, noise: 0.028, gain: 0.16 });
+      case "ref":   return makeSample({ baseFreq: 160, wobble: 8, noise: 0.006, gain: 0.16 }); // "hidden reference"
+      case "anch":  return makeSample({ baseFreq: 160, wobble: 0, noise: 0.06, bandpass: 800, gain: 0.14 }); // low anchor
+      default: throw new Error("Unknown key: " + key);
+    }
+  }
+
+  // -----------------------------
+  // UI setup helpers
+  // -----------------------------
+  const $ = sel => document.querySelector(sel);
+  const jsonOut = $("#jsonOut");
+
+  function renderJson() {
+    const out = {
+      timestamp: new Date().toISOString(),
+      mos: state.mos,
+      cmos: state.cmos,
+      ab: state.ab,
+      abx: { ...state.abx, correct: state.abx.choice ? (state.abx.choice === state.abx.xIs) : null },
+      mushra: state.mushra,
+      clips: {
+        theme: currentTheme,
+        mos: (resolvedFilenameForTestKey("mos")||{}).name || null,
+        cmosA: (resolvedFilenameForTestKey("cmosA")||{}).name || null,
+        cmosB: (resolvedFilenameForTestKey("cmosB")||{}).name || null,
+        abA: (resolvedFilenameForTestKey("abA")||{}).name || null,
+        abB: (resolvedFilenameForTestKey("abB")||{}).name || null,
+        abxA: (resolvedFilenameForTestKey("abxA")||{}).name || null,
+        abxB: (resolvedFilenameForTestKey("abxB")||{}).name || null,
+        abxX: (resolvedFilenameForTestKey("abxX")||{}).name || null,
+        mushra: {
+          sys1: (resolvedFilenameForTestKey("sys1")||{}).name || null,
+          sys2: (resolvedFilenameForTestKey("sys2")||{}).name || null,
+          sys3: (resolvedFilenameForTestKey("sys3")||{}).name || null,
+          ref:  (resolvedFilenameForTestKey("ref")||{}).name || null,
+          anch: (resolvedFilenameForTestKey("anch")||{}).name || null
+        }
+      }
+    };
+    jsonOut.textContent = JSON.stringify(out, null, 2);
+  }
+
+  function makeRadioScale(container, name, values, labels = null) {
+    container.innerHTML = "";
+    values.forEach((v, i) => {
+      const id = `${name}_${v}`;
+      const lab = (labels && labels[i]) ? labels[i] : String(v);
+      const wrap = document.createElement("label");
+      wrap.innerHTML = `<input type="radio" name="${name}" value="${v}" id="${id}"> <span>${lab}</span>`;
+      container.appendChild(wrap);
+    });
+  }
+
+  // MOS scale 1-5
+  makeRadioScale($("#mosChoices"), "mosScale", [1,2,3,4,5]);
+
+  // CMOS scale -3..+3
+  makeRadioScale(
+    $("#cmosChoices"),
+    "cmosScale",
+    [-3,-2,-1,0,1,2,3],
+    ["-3 (A much worse)","-2","-1","0 (Same)","+1","+2","+3 (A much better)"]
+  );
+
+  // MUSHRA table
+  const mushraStimuli = [
+    { id: "sys1", label: "System 1" },
+    { id: "sys2", label: "System 2" },
+    { id: "sys3", label: "System 3" },
+    { id: "ref",  label: "Reference" },   // typically hidden reference; here labeled for demo clarity
+    { id: "anch", label: "Low Anchor" }
+  ];
+
+  function randomizeMushraOrder() {
+    const arr = mushraStimuli.map(x => ({...x}));
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    state.mushra.order = arr.map(x => x.id);
+    // keep existing scores if any
+    renderMushraTable(arr);
+    $("#mushraOrder").textContent = "Order randomized";
+  }
+
+  function renderMushraTable(orderObjs) {
+    const tbody = $("#mushraTable tbody");
+    tbody.innerHTML = "";
+    orderObjs.forEach(item => {
+      const tr = document.createElement("tr");
+      const existing = state.mushra.scores[item.id];
+      tr.innerHTML = `
+        <td>${item.label}</td>
+        <td class="right">
+          <button data-play="${item.id}">Play</button>
+        </td>
+        <td class="right">
+          <input type="range" min="0" max="100" step="1" value="${existing ?? 50}" data-mushra="${item.id}">
+          <span class="pill" id="mushraVal_${item.id}">${existing ?? 50}</span>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // bind range updates
+    tbody.querySelectorAll('input[type="range"][data-mushra]').forEach(r => {
+      r.addEventListener("input", e => {
+        const id = e.target.getAttribute("data-mushra");
+        const val = Number(e.target.value);
+        state.mushra.scores[id] = val;
+        const pill = document.getElementById("mushraVal_" + id);
+        if (pill) pill.textContent = val;
+        renderJson();
+      });
+    });
+  }
+
+  // default order
+  randomizeMushraOrder();
+  updateDisplayedLabels();
+
+  // -----------------------------
+  // Event wiring
+  // -----------------------------
+  $("#enableAudio").addEventListener("click", async () => {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      await audioCtx.resume();
+      $("#audioStatus").textContent = "Audio: enabled";
+      $("#audioStatus").style.background = "#eef8ee";
+      $("#audioStatus").style.borderColor = "#cfe9cf";
+    } catch (e) {
+      alert("Could not enable audio: " + e.message);
+    }
+  });
+
+  // File loading + teaching controls
+  const filePicker = document.getElementById("filePicker");
+  if (filePicker) {
+    filePicker.addEventListener("change", (e) => {
+      const files = e.target.files;
+      if (files && files.length) loadFiles(files);
+    });
+  }
+
+  const themeSel = document.getElementById("themeSelect");
+  if (themeSel) {
+    themeSel.addEventListener("change", (e) => {
+      currentTheme = e.target.value;
+      // reset ABX randomization for a clean demo on theme switch
+      state.abx = { xIs: (Math.random() < 0.5 ? "A" : "B"), choice: null };
+      updateDisplayedLabels();
+      renderJson();
+    });
+  }
+
+  const showLabelsEl = document.getElementById("showLabels");
+  if (showLabelsEl) {
+    showLabelsEl.addEventListener("change", (e) => {
+      showFilenames = !!e.target.checked;
+      updateDisplayedLabels();
+    });
+  }
+
+  $("#resetAll").addEventListener("click", () => {
+    stopAll();
+    state.mos = null;
+    state.cmos = null;
+    state.ab = { choice: null };
+    state.abx = { xIs: (Math.random() < 0.5 ? "A" : "B"), choice: null };
+    state.mushra = { order: [], scores: {} };
+    document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+
+    $("#abChoice").classList.add("hidden");
+    $("#abxChoice").classList.add("hidden");
+    ["mosDone","cmosDone","abDone","abxDone","mushraDone"].forEach(id => $("#" + id).classList.add("hidden"));
+    randomizeMushraOrder();
+    updateDisplayedLabels();
+    renderJson();
+  });
+
+  document.body.addEventListener("click", (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLElement)) return;
+
+    // Stop
+    if (t.hasAttribute("data-stop")) {
+      stopAll();
+      return;
+    }
+
+    // Play buttons
+    if (t.hasAttribute("data-play")) {
+      if (!audioCtx && !(fileByCond && fileByCond.size > 0)) { alert("Click Enable Audio first."); return; }
+      const key = t.getAttribute("data-play");
+      try {
+        const s = sampleFor(key);
+        s.start();
+      } catch (err) {
+        alert("Play failed: " + err.message);
+      }
+      return;
+    }
+
+    // AB choices
+    if (t.hasAttribute("data-ab")) {
+      state.ab.choice = t.getAttribute("data-ab");
+      $("#abChoice").textContent = "Selected: " + state.ab.choice;
+      $("#abChoice").classList.remove("hidden");
+      renderJson();
+      return;
+    }
+
+    // ABX choices
+    if (t.hasAttribute("data-abx")) {
+      state.abx.choice = t.getAttribute("data-abx");
+      $("#abxChoice").textContent = "Selected: X = " + state.abx.choice;
+      $("#abxChoice").classList.remove("hidden");
+      renderJson();
+      return;
+    }
+
+    // Submit handlers
+    if (t.hasAttribute("data-submit")) {
+      const which = t.getAttribute("data-submit");
+
+      if (which === "mos") {
+        const sel = document.querySelector('input[name="mosScale"]:checked');
+        if (!sel) return alert("Pick a MOS rating first.");
+        state.mos = Number(sel.value);
+        $("#mosDone").classList.remove("hidden");
+      }
+
+      if (which === "cmos") {
+        const sel = document.querySelector('input[name="cmosScale"]:checked');
+        if (!sel) return alert("Pick a CMOS rating first.");
+        state.cmos = Number(sel.value);
+        $("#cmosDone").classList.remove("hidden");
+      }
+
+      if (which === "ab") {
+        if (!state.ab.choice) return alert("Choose A or B first.");
+        $("#abDone").classList.remove("hidden");
+      }
+
+      if (which === "abx") {
+        if (!state.abx.choice) return alert("Choose whether X is A or B first.");
+        $("#abxDone").classList.remove("hidden");
+      }
+
+      if (which === "mushra") {
+        // ensure each stimulus has a score (slider default handles this)
+        mushraStimuli.forEach(s => {
+          if (state.mushra.scores[s.id] == null) state.mushra.scores[s.id] = 50;
+        });
+        $("#mushraDone").classList.remove("hidden");
+      }
+
+      renderJson();
+      return;
+    }
+  });
+
+  $("#mushraRandomize").addEventListener("click", () => {
+    randomizeMushraOrder();
+    renderJson();
+  });
+
+  $("#copyJson").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(jsonOut.textContent);
+      alert("Copied JSON to clipboard.");
+    } catch {
+      alert("Copy failed (browser permissions). You can select and copy manually.");
+    }
+  });
+
+  $("#downloadJson").addEventListener("click", () => {
+    const blob = new Blob([jsonOut.textContent], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "tts_subjective_results.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  });
+
+  renderJson();
+})();
+</script>
+</body>
+</html>

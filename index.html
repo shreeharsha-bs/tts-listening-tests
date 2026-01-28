@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TTS Subjective Listening Tests Demo</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+    
+    * { box-sizing: border-box; }
+    
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+    }
+    
+    header h1 {
+      margin: 0 0 10px;
+      font-size: 28px;
+    }
+    
+    header p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 16px;
+    }
+    
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      background: var(--card-bg);
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .tab-btn {
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    
+    .tab-btn:hover {
+      background: var(--bg);
+      color: var(--text);
+    }
+    
+    .tab-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .tab-content {
+      display: none;
+      padding: 24px 0;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: var(--primary);
+      color: white;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .card-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .card-desc {
+      color: var(--text-muted);
+      margin: 0 0 20px;
+      font-size: 14px;
+    }
+    
+    .audio-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    button {
+      padding: 10px 18px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    button:hover {
+      background: var(--bg);
+      border-color: var(--primary);
+    }
+    
+    button.primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    button.primary:hover {
+      background: var(--primary-dark);
+    }
+    
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .scale-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .scale-btn {
+      min-width: 50px;
+      padding: 12px 16px;
+      text-align: center;
+    }
+    
+    .scale-btn.selected {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    .scale-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+    
+    .choice-btn {
+      padding: 16px 32px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .choice-btn.selected {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 8px;
+    }
+    
+    .slider-row label {
+      min-width: 100px;
+      font-weight: 500;
+    }
+    
+    .slider-row input[type="range"] {
+      flex: 1;
+      height: 8px;
+      -webkit-appearance: none;
+      background: var(--border);
+      border-radius: 4px;
+      outline: none;
+    }
+    
+    .slider-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      background: var(--primary);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    .slider-value {
+      min-width: 40px;
+      text-align: right;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    
+    .mushra-scale {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 0 116px 0 116px;
+      margin-top: -8px;
+      margin-bottom: 16px;
+    }
+    
+    .bw-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    
+    .bw-item {
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    
+    .bw-item.best {
+      border-color: var(--success);
+      background: rgba(16, 185, 129, 0.1);
+    }
+    
+    .bw-item.worst {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+    
+    .bw-item button {
+      margin-top: 10px;
+      width: 100%;
+    }
+    
+    .bw-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .bw-buttons button {
+      flex: 1;
+      font-size: 12px;
+      padding: 8px;
+    }
+    
+    .best-btn.selected {
+      background: var(--success);
+      color: white;
+      border-color: var(--success);
+    }
+    
+    .worst-btn.selected {
+      background: #ef4444;
+      color: white;
+      border-color: #ef4444;
+    }
+    
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+    
+    .submit-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    .status-badge.recorded {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+    }
+    
+    .status-badge.pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+    }
+    
+    .results-card {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .results-card h3 {
+      margin: 0 0 16px;
+      color: white;
+    }
+    
+    .results-json {
+      background: #0f172a;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .results-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    
+    .setup-card {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      border: 1px solid #bae6fd;
+    }
+    
+    .file-input-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    
+    .file-input-wrapper input[type="file"] {
+      display: none;
+    }
+    
+    .file-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: var(--primary);
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    
+    .file-label:hover {
+      background: var(--primary-dark);
+    }
+    
+    .file-status {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    
+    .theme-select {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      cursor: pointer;
+    }
+    
+    .info-box {
+      background: #fefce8;
+      border: 1px solid #fef08a;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #854d0e;
+      margin-top: 16px;
+    }
+    
+    @media (max-width: 600px) {
+      .tabs {
+        justify-content: center;
+      }
+      
+      .tab-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+      
+      .bw-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎧 TTS Subjective Listening Tests</h1>
+    <p>Interactive demos of 6 common evaluation methods for speech synthesis</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="setup">Setup</button>
+    <button class="tab-btn" data-tab="mos">MOS</button>
+    <button class="tab-btn" data-tab="cmos">CMOS</button>
+    <button class="tab-btn" data-tab="ab">AB Test</button>
+    <button class="tab-btn" data-tab="abx">ABX Test</button>
+    <button class="tab-btn" data-tab="mushra">MUSHRA</button>
+    <button class="tab-btn" data-tab="bw">Best-Worst</button>
+    <button class="tab-btn" data-tab="results">Results</button>
+  </div>
+
+  <div class="container">
+    <!-- Setup Tab -->
+    <div class="tab-content active" id="tab-setup">
+      <div class="card setup-card">
+        <div class="card-header">
+          <span class="badge">Setup</span>
+          <h2 class="card-title">Load Audio Files</h2>
+        </div>
+        <p class="card-desc">Select the folder containing your TTS audio samples to begin the tests.</p>
+        
+        <div class="file-input-wrapper">
+          <label class="file-label" for="audioFolder">
+            📁 Select Audio Folder
+          </label>
+          <input type="file" id="audioFolder" webkitdirectory directory multiple accept=".wav,audio/*">
+          <span class="file-status" id="fileStatus">No files loaded</span>
+        </div>
+        
+        <div style="margin-top: 20px;">
+          <label style="font-weight: 500; margin-right: 12px;">Theme:</label>
+          <select class="theme-select" id="themeSelect">
+            <option value="sent01">Theme 1: Sun</option>
+            <option value="sent02">Theme 2: Chess</option>
+            <option value="sent03">Theme 3: Winter</option>
+          </select>
+        </div>
+        
+        <div class="info-box">
+          💡 <strong>Tip:</strong> Audio files should follow the naming pattern: 
+          <code>sent01_formal_clear_female_res.wav</code>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 style="margin-top: 0;">About This Demo</h3>
+        <p>This page demonstrates <strong>6 subjective listening test methods</strong> commonly used to evaluate Text-to-Speech (TTS) systems:</p>
+        <ul>
+          <li><strong>MOS</strong> — Mean Opinion Score (absolute 1–5 rating)</li>
+          <li><strong>CMOS</strong> — Comparative MOS (relative −3 to +3 rating)</li>
+          <li><strong>AB</strong> — Forced choice preference test</li>
+          <li><strong>ABX</strong> — Identify which sample X matches</li>
+          <li><strong>MUSHRA</strong> — Multi-stimulus with hidden reference and anchor</li>
+          <li><strong>Best-Worst</strong> — Select best and worst from a block</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- MOS Tab -->
+    <div class="tab-content" id="tab-mos">
+      <div class="card">
+        <div class="card-header">
+          <span class="badge">Test 1</span>
+          <h2 class="card-title">MOS — Mean Opinion Score</h2>
+        </div>
+        <p class="card-desc">Rate the naturalness of this speech sample on a scale from 1 (Bad) to 5 (Excellent).</p>
+        
+        <div class="audio-controls">
+          <button class="primary" id="mosPlay">▶ Play Sample</button>
+          <button id="mosStop">⏹ Stop</button>
+          <span class="file-status" id="mosFile"></span>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="scale-buttons" id="mosScale">
+          <button class="scale-btn" data-value="1">1</button>
+          <button class="scale-btn" data-value="2">2</button>
+          <button class="scale-btn" data-value="3">3</button>
+          <button class="scale-btn" data-value="4">4</button>
+          <button class="scale-btn" data-value="5">5</button>
+        </div>
+        <div class="scale-labels">
+          <span>Bad</span>
+          <span>Poor</span>
+          <span>Fair</span>
+          <span>Good</span>
+          <span>Excellent</span>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="submit-row">
+          <button class="primary" id="mosSubmit">Submit Rating</button>
+          <span class="status-badge pending" id="mosStatus">Not rated</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CMOS Tab -->
+    <div class="tab-content" id="tab-cmos">
+      <div class="card">
+        <div class="card-header">
+          <span class="badge">Test 2</span>
+          <h2 class="card-title">CMOS — Comparative MOS</h2>
+        </div>
+        <p class="card-desc">Compare Sample A vs Sample B. Rate how much better or worse A is compared to B.</p>
+        
+        <div class="audio-controls">
+          <button class="primary" id="cmosPlayA">▶ Play A</button>
+          <button class="primary" id="cmosPlayB">▶ Play B</button>
+          <button id="cmosStop">⏹ Stop</button>
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          <span id="cmosFileA"></span> &nbsp;|&nbsp; <span id="cmosFileB"></span>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="scale-buttons" id="cmosScale">
+          <button class="scale-btn" data-value="-3">−3</button>
+          <button class="scale-btn" data-value="-2">−2</button>
+          <button class="scale-btn" data-value="-1">−1</button>
+          <button class="scale-btn" data-value="0">0</button>
+          <button class="scale-btn" data-value="1">+1</button>
+          <button class="scale-btn" data-value="2">+2</button>
+          <button class="scale-btn" data-value="3">+3</button>
+        </div>
+        <div class="scale-labels">
+          <span>A much worse</span>
+          <span>No difference</span>
+          <span>A much better</span>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="submit-row">
+          <button class="primary" id="cmosSubmit">Submit Rating</button>
+          <span class="status-badge pending" id="cmosStatus">Not rated</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AB Tab -->
+    <div class="tab-content" id="tab-ab">
+      <div class="card">
+        <div class="card-header">
+          <span class="badge">Test 3</span>
+          <h2 class="card-title">AB Test — Forced Choice</h2>
+        </div>
+        <p class="card-desc">Listen to both samples, then choose which one sounds more natural. You must pick one.</p>
+        
+        <div class="audio-controls">
+          <button class="primary" id="abPlayA">▶ Play A</button>
+          <button class="primary" id="abPlayB">▶ Play B</button>
+          <button id="abStop">⏹ Stop</button>
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          <span id="abFileA"></span> &nbsp;|&nbsp; <span id="abFileB"></span>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="scale-buttons" id="abChoice">
+          <button class="choice-btn" data-value="A">Prefer A</button>
+          <button class="choice-btn" data-value="B">Prefer B</button>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="submit-row">
+          <button class="primary" id="abSubmit">Submit Choice</button>
+          <span class="status-badge pending" id="abStatus">Not chosen</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABX Tab -->
+    <div class="tab-content" id="tab-abx">
+      <div class="card">
+        <div class="card-header">
+          <span class="badge">Test 4</span>
+          <h2 class="card-title">ABX Test — Identification</h2>
+        </div>
+        <p class="card-desc">Sample X is identical to either A or B. Listen carefully and identify which one X matches.</p>
+        
+        <div class="audio-controls">
+          <button class="primary" id="abxPlayA">▶ Play A</button>
+          <button class="primary" id="abxPlayB">▶ Play B</button>
+          <button class="primary" id="abxPlayX" style="background: var(--warning); border-color: var(--warning);">▶ Play X</button>
+          <button id="abxStop">⏹ Stop</button>
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          <span id="abxFileA"></span> &nbsp;|&nbsp; <span id="abxFileB"></span> &nbsp;|&nbsp; <span id="abxFileX">X = ?</span>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="scale-buttons" id="abxChoice">
+          <button class="choice-btn" data-value="A">X matches A</button>
+          <button class="choice-btn" data-value="B">X matches B</button>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="submit-row">
+          <button class="primary" id="abxSubmit">Submit Answer</button>
+          <span class="status-badge pending" id="abxStatus">Not answered</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MUSHRA Tab -->
+    <div class="tab-content" id="tab-mushra">
+      <div class="card">
+        <div class="card-header">
+          <span class="badge">Test 5</span>
+          <h2 class="card-title">MUSHRA</h2>
+        </div>
+        <p class="card-desc">Rate each sample on a 0–100 scale. One sample is a hidden reference (should be rated ~100). One is a low anchor.</p>
+        
+        <div class="audio-controls" style="margin-bottom: 24px;">
+          <button class="primary" id="mushraPlayRef">▶ Reference</button>
+          <button id="mushraStop">⏹ Stop</button>
+        </div>
+        
+        <div class="mushra-scale">
+          <span>Bad (0-20)</span>
+          <span>Poor (20-40)</span>
+          <span>Fair (40-60)</span>
+          <span>Good (60-80)</span>
+          <span>Excellent (80-100)</span>
+        </div>
+        
+        <div id="mushraSliders">
+          <!-- Generated by JS -->
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="submit-row">
+          <button class="primary" id="mushraSubmit">Submit Ratings</button>
+          <span class="status-badge pending" id="mushraStatus">Not rated</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Best-Worst Tab -->
+    <div class="tab-content" id="tab-bw">
+      <div class="card">
+        <div class="card-header">
+          <span class="badge">Test 6</span>
+          <h2 class="card-title">Best-Worst Scaling</h2>
+        </div>
+        <p class="card-desc">Listen to all 4 samples, then select the one you like <strong>BEST</strong> and the one you like <strong>WORST</strong>.</p>
+        
+        <div class="bw-grid" id="bwGrid">
+          <!-- Generated by JS -->
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="submit-row">
+          <button class="primary" id="bwSubmit">Submit Choices</button>
+          <span class="status-badge pending" id="bwStatus">Select best & worst</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Tab -->
+    <div class="tab-content" id="tab-results">
+      <div class="card">
+        <div class="card-header">
+          <span class="badge">Results</span>
+          <h2 class="card-title">Collected Responses</h2>
+        </div>
+        <p class="card-desc">All your test responses are displayed below as JSON.</p>
+        
+        <div class="results-card">
+          <h3>Response Data</h3>
+          <div class="results-json" id="resultsJson">{}</div>
+          <div class="results-actions">
+            <button class="primary" id="downloadJson">⬇ Download JSON</button>
+            <button id="copyJson">📋 Copy to Clipboard</button>
+            <button id="resetAll" style="margin-left: auto; background: #fee2e2; border-color: #fecaca; color: #dc2626;">🗑 Reset All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== State Management ==========
+    const state = {
+      audioFiles: {},
+      theme: 'sent01',
+      audioContext: null,
+      currentSource: null,
+      results: {
+        mos: null,
+        cmos: null,
+        ab: null,
+        abx: null,
+        mushra: null,
+        bestWorst: null
+      },
+      abxAnswer: null, // Store which sample X actually is
+      selections: {
+        mos: null,
+        cmos: null,
+        ab: null,
+        abx: null,
+        mushra: {},
+        bwBest: null,
+        bwWorst: null
+      }
+    };
+
+    // ========== Audio File Mapping ==========
+    const testConfig = {
+      mos: {
+        sample: 'formal_clear_female_res'
+      },
+      cmos: {
+        sampleA: 'formal_clear_male_res',
+        sampleB: 'formal_clear_male_nonres'
+      },
+      ab: {
+        sampleA: 'informal_spont_male_res',
+        sampleB: 'informal_spont_female_res'
+      },
+      abx: {
+        sampleA: 'formal_clear_amb_res',
+        sampleB: 'formal_spont_amb_res'
+      },
+      mushra: {
+        reference: 'formal_clear_female_res',
+        anchor: 'informal_spont_amb_nonres', // Will be low-pass filtered
+        samples: [
+          'formal_clear_female_res', // Hidden reference
+          'formal_clear_female_nonres',
+          'formal_spont_female_res',
+          'informal_clear_female_res',
+          'informal_spont_amb_nonres' // Anchor
+        ]
+      },
+      bestWorst: {
+        samples: [
+          'formal_clear_male_res',
+          'informal_spont_female_nonres',
+          'formal_spont_amb_res',
+          'informal_clear_male_nonres'
+        ]
+      }
+    };
+
+    // ========== DOM Ready ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      initTabs();
+      initFileLoader();
+      initMOS();
+      initCMOS();
+      initAB();
+      initABX();
+      initMUSHRA();
+      initBestWorst();
+      initResults();
+      updateResultsDisplay();
+    });
+
+    // ========== Tab Navigation ==========
+    function initTabs() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tabId = btn.dataset.tab;
+          
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          
+          btn.classList.add('active');
+          document.getElementById(`tab-${tabId}`).classList.add('active');
+          
+          stopAudio();
+        });
+      });
+    }
+
+    // ========== File Loading ==========
+    function initFileLoader() {
+      const fileInput = document.getElementById('audioFolder');
+      const fileStatus = document.getElementById('fileStatus');
+      const themeSelect = document.getElementById('themeSelect');
+
+      fileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files).filter(f => 
+          f.name.endsWith('.wav') || f.type.startsWith('audio/')
+        );
+        
+        state.audioFiles = {};
+        files.forEach(file => {
+          state.audioFiles[file.name.replace('.wav', '')] = file;
+        });
+        
+        const count = Object.keys(state.audioFiles).length;
+        fileStatus.textContent = `${count} audio files loaded`;
+        fileStatus.style.color = count > 0 ? 'var(--success)' : 'var(--text-muted)';
+        
+        updateAllFileLabels();
+      });
+
+      themeSelect.addEventListener('change', (e) => {
+        state.theme = e.target.value;
+        updateAllFileLabels();
+      });
+    }
+
+    function getFileKey(suffix) {
+      return `${state.theme}_${suffix}`;
+    }
+
+    function getAudioFile(suffix) {
+      const key = getFileKey(suffix);
+      return state.audioFiles[key] || null;
+    }
+
+    function updateAllFileLabels() {
+      // MOS
+      const mosFile = getFileKey(testConfig.mos.sample);
+      document.getElementById('mosFile').textContent = state.audioFiles[mosFile] ? mosFile : '(file not found)';
+      
+      // CMOS
+      document.getElementById('cmosFileA').textContent = `A: ${getFileKey(testConfig.cmos.sampleA)}`;
+      document.getElementById('cmosFileB').textContent = `B: ${getFileKey(testConfig.cmos.sampleB)}`;
+      
+      // AB
+      document.getElementById('abFileA').textContent = `A: ${getFileKey(testConfig.ab.sampleA)}`;
+      document.getElementById('abFileB').textContent = `B: ${getFileKey(testConfig.ab.sampleB)}`;
+      
+      // ABX
+      document.getElementById('abxFileA').textContent = `A: ${getFileKey(testConfig.abx.sampleA)}`;
+      document.getElementById('abxFileB').textContent = `B: ${getFileKey(testConfig.abx.sampleB)}`;
+      
+      // Randomly assign X
+      state.abxAnswer = Math.random() < 0.5 ? 'A' : 'B';
+      
+      // Rebuild MUSHRA sliders
+      buildMushraSliders();
+      
+      // Rebuild Best-Worst grid
+      buildBestWorstGrid();
+    }
+
+    // ========== Audio Playback ==========
+    async function playAudio(file, applyLowPass = false) {
+      if (!file) {
+        alert('Audio file not found. Please load the audio folder first.');
+        return;
+      }
+      
+      stopAudio();
+      
+      if (!state.audioContext) {
+        state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const audioBuffer = await state.audioContext.decodeAudioData(arrayBuffer);
+        
+        state.currentSource = state.audioContext.createBufferSource();
+        state.currentSource.buffer = audioBuffer;
+        
+        if (applyLowPass) {
+          const filter = state.audioContext.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = 3500; // Low anchor: 3.5kHz cutoff
+          state.currentSource.connect(filter);
+          filter.connect(state.audioContext.destination);
+        } else {
+          state.currentSource.connect(state.audioContext.destination);
+        }
+        
+        state.currentSource.start();
+      } catch (err) {
+        console.error('Audio playback error:', err);
+        alert('Error playing audio file.');
+      }
+    }
+
+    function stopAudio() {
+      if (state.currentSource) {
+        try {
+          state.currentSource.stop();
+        } catch (e) {}
+        state.currentSource = null;
+      }
+    }
+
+    // ========== MOS Test ==========
+    function initMOS() {
+      const scaleButtons = document.querySelectorAll('#mosScale .scale-btn');
+      
+      scaleButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          scaleButtons.forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          state.selections.mos = parseInt(btn.dataset.value);
+        });
+      });
+      
+      document.getElementById('mosPlay').addEventListener('click', () => {
+        playAudio(getAudioFile(testConfig.mos.sample));
+      });
+      
+      document.getElementById('mosStop').addEventListener('click', stopAudio);
+      
+      document.getElementById('mosSubmit').addEventListener('click', () => {
+        if (state.selections.mos === null) {
+          alert('Please select a rating first.');
+          return;
+        }
+        
+        state.results.mos = {
+          sample: getFileKey(testConfig.mos.sample),
+          rating: state.selections.mos,
+          timestamp: new Date().toISOString()
+        };
+        
+        document.getElementById('mosStatus').textContent = `Rated: ${state.selections.mos}`;
+        document.getElementById('mosStatus').className = 'status-badge recorded';
+        updateResultsDisplay();
+      });
+    }
+
+    // ========== CMOS Test ==========
+    function initCMOS() {
+      const scaleButtons = document.querySelectorAll('#cmosScale .scale-btn');
+      
+      scaleButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          scaleButtons.forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          state.selections.cmos = parseInt(btn.dataset.value);
+        });
+      });
+      
+      document.getElementById('cmosPlayA').addEventListener('click', () => {
+        playAudio(getAudioFile(testConfig.cmos.sampleA));
+      });
+      
+      document.getElementById('cmosPlayB').addEventListener('click', () => {
+        playAudio(getAudioFile(testConfig.cmos.sampleB));
+      });
+      
+      document.getElementById('cmosStop').addEventListener('click', stopAudio);
+      
+      document.getElementById('cmosSubmit').addEventListener('click', () => {
+        if (state.selections.cmos === null) {
+          alert('Please select a rating first.');
+          return;
+        }
+        
+        state.results.cmos = {
+          sampleA: getFileKey(testConfig.cmos.sampleA),
+          sampleB: getFileKey(testConfig.cmos.sampleB),
+          rating: state.selections.cmos,
+          timestamp: new Date().toISOString()
+        };
+        
+        document.getElementById('cmosStatus').textContent = `Rated: ${state.selections.cmos > 0 ? '+' : ''}${state.selections.cmos}`;
+        document.getElementById('cmosStatus').className = 'status-badge recorded';
+        updateResultsDisplay();
+      });
+    }
+
+    // ========== AB Test ==========
+    function initAB() {
+      const choiceButtons = document.querySelectorAll('#abChoice .choice-btn');
+      
+      choiceButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          choiceButtons.forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          state.selections.ab = btn.dataset.value;
+        });
+      });
+      
+      document.getElementById('abPlayA').addEventListener('click', () => {
+        playAudio(getAudioFile(testConfig.ab.sampleA));
+      });
+      
+      document.getElementById('abPlayB').addEventListener('click', () => {
+        playAudio(getAudioFile(testConfig.ab.sampleB));
+      });
+      
+      document.getElementById('abStop').addEventListener('click', stopAudio);
+      
+      document.getElementById('abSubmit').addEventListener('click', () => {
+        if (!state.selections.ab) {
+          alert('Please select A or B.');
+          return;
+        }
+        
+        state.results.ab = {
+          sampleA: getFileKey(testConfig.ab.sampleA),
+          sampleB: getFileKey(testConfig.ab.sampleB),
+          choice: state.selections.ab,
+          chosenSample: state.selections.ab === 'A' 
+            ? getFileKey(testConfig.ab.sampleA) 
+            : getFileKey(testConfig.ab.sampleB),
+          timestamp: new Date().toISOString()
+        };
+        
+        document.getElementById('abStatus').textContent = `Chose: ${state.selections.ab}`;
+        document.getElementById('abStatus').className = 'status-badge recorded';
+        updateResultsDisplay();
+      });
+    }
+
+    // ========== ABX Test ==========
+    function initABX() {
+      const choiceButtons = document.querySelectorAll('#abxChoice .choice-btn');
+      
+      choiceButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          choiceButtons.forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          state.selections.abx = btn.dataset.value;
+        });
+      });
+      
+      document.getElementById('abxPlayA').addEventListener('click', () => {
+        playAudio(getAudioFile(testConfig.abx.sampleA));
+      });
+      
+      document.getElementById('abxPlayB').addEventListener('click', () => {
+        playAudio(getAudioFile(testConfig.abx.sampleB));
+      });
+      
+      document.getElementById('abxPlayX').addEventListener('click', () => {
+        // X is randomly assigned to A or B
+        const suffix = state.abxAnswer === 'A' 
+          ? testConfig.abx.sampleA 
+          : testConfig.abx.sampleB;
+        playAudio(getAudioFile(suffix));
+      });
+      
+      document.getElementById('abxStop').addEventListener('click', stopAudio);
+      
+      document.getElementById('abxSubmit').addEventListener('click', () => {
+        if (!state.selections.abx) {
+          alert('Please identify which sample X matches.');
+          return;
+        }
+        
+        const isCorrect = state.selections.abx === state.abxAnswer;
+        
+        state.results.abx = {
+          sampleA: getFileKey(testConfig.abx.sampleA),
+          sampleB: getFileKey(testConfig.abx.sampleB),
+          xWas: state.abxAnswer,
+          userAnswer: state.selections.abx,
+          correct: isCorrect,
+          timestamp: new Date().toISOString()
+        };
+        
+        document.getElementById('abxStatus').textContent = `Answered: ${state.selections.abx} (${isCorrect ? '✓ Correct' : '✗ Wrong'})`;
+        document.getElementById('abxStatus').className = 'status-badge recorded';
+        updateResultsDisplay();
+      });
+    }
+
+    // ========== MUSHRA Test ==========
+    function initMUSHRA() {
+      document.getElementById('mushraPlayRef').addEventListener('click', () => {
+        playAudio(getAudioFile(testConfig.mushra.reference));
+      });
+      
+      document.getElementById('mushraStop').addEventListener('click', stopAudio);
+      
+      document.getElementById('mushraSubmit').addEventListener('click', () => {
+        const sliders = document.querySelectorAll('#mushraSliders input[type="range"]');
+        const ratings = {};
+        
+        sliders.forEach(slider => {
+          ratings[slider.dataset.sample] = parseInt(slider.value);
+        });
+        
+        state.results.mushra = {
+          reference: getFileKey(testConfig.mushra.reference),
+          ratings: ratings,
+          timestamp: new Date().toISOString()
+        };
+        
+        document.getElementById('mushraStatus').textContent = 'Ratings submitted';
+        document.getElementById('mushraStatus').className = 'status-badge recorded';
+        updateResultsDisplay();
+      });
+    }
+
+    function buildMushraSliders() {
+      const container = document.getElementById('mushraSliders');
+      container.innerHTML = '';
+      
+      // Shuffle samples for display
+      const shuffled = [...testConfig.mushra.samples].sort(() => Math.random() - 0.5);
+      
+      shuffled.forEach((suffix, i) => {
+        const key = getFileKey(suffix);
+        const isAnchor = suffix === testConfig.mushra.anchor;
+        const label = `Sample ${String.fromCharCode(65 + i)}`;
+        
+        const row = document.createElement('div');
+        row.className = 'slider-row';
+        row.innerHTML = `
+          <button onclick="playMushraAudio('${suffix}', ${isAnchor})">${label}</button>
+          <input type="range" min="0" max="100" value="50" data-sample="${key}" 
+                 oninput="this.nextElementSibling.textContent = this.value">
+          <span class="slider-value">50</span>
+        `;
+        container.appendChild(row);
+        
+        state.selections.mushra[key] = 50;
+      });
+    }
+
+    function playMushraAudio(suffix, isAnchor) {
+      playAudio(getAudioFile(suffix), isAnchor);
+    }
+
+    // ========== Best-Worst Test ==========
+    function initBestWorst() {
+      document.getElementById('bwSubmit').addEventListener('click', () => {
+        if (!state.selections.bwBest || !state.selections.bwWorst) {
+          alert('Please select both a BEST and a WORST sample.');
+          return;
+        }
+        
+        if (state.selections.bwBest === state.selections.bwWorst) {
+          alert('BEST and WORST cannot be the same sample.');
+          return;
+        }
+        
+        state.results.bestWorst = {
+          samples: testConfig.bestWorst.samples.map(s => getFileKey(s)),
+          best: state.selections.bwBest,
+          worst: state.selections.bwWorst,
+          timestamp: new Date().toISOString()
+        };
+        
+        document.getElementById('bwStatus').textContent = 'Choices submitted';
+        document.getElementById('bwStatus').className = 'status-badge recorded';
+        updateResultsDisplay();
+      });
+    }
+
+    function buildBestWorstGrid() {
+      const container = document.getElementById('bwGrid');
+      container.innerHTML = '';
+      
+      // Shuffle for display
+      const shuffled = [...testConfig.bestWorst.samples].sort(() => Math.random() - 0.5);
+      
+      shuffled.forEach((suffix, i) => {
+        const key = getFileKey(suffix);
+        const label = `Sample ${i + 1}`;
+        
+        const item = document.createElement('div');
+        item.className = 'bw-item';
+        item.dataset.key = key;
+        item.innerHTML = `
+          <button class="primary" onclick="playBWAudio('${suffix}')" style="width: 100%;">▶ ${label}</button>
+          <div class="bw-buttons">
+            <button class="best-btn" onclick="selectBW('${key}', 'best', this)">👍 Best</button>
+            <button class="worst-btn" onclick="selectBW('${key}', 'worst', this)">👎 Worst</button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function playBWAudio(suffix) {
+      playAudio(getAudioFile(suffix));
+    }
+
+    function selectBW(key, type, btn) {
+      // Clear previous selection of same type
+      document.querySelectorAll(`.bw-item`).forEach(item => {
+        if (type === 'best') {
+          item.classList.remove('best');
+          item.querySelector('.best-btn').classList.remove('selected');
+        } else {
+          item.classList.remove('worst');
+          item.querySelector('.worst-btn').classList.remove('selected');
+        }
+      });
+      
+      // Set new selection
+      const item = btn.closest('.bw-item');
+      if (type === 'best') {
+        state.selections.bwBest = key;
+        item.classList.add('best');
+        btn.classList.add('selected');
+      } else {
+        state.selections.bwWorst = key;
+        item.classList.add('worst');
+        btn.classList.add('selected');
+      }
+      
+      // Update status
+      const status = document.getElementById('bwStatus');
+      if (state.selections.bwBest && state.selections.bwWorst) {
+        status.textContent = 'Ready to submit';
+        status.className = 'status-badge pending';
+      }
+    }
+
+    // ========== Results ==========
+    function initResults() {
+      document.getElementById('downloadJson').addEventListener('click', () => {
+        const data = JSON.stringify(state.results, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tts_test_results_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+      
+      document.getElementById('copyJson').addEventListener('click', () => {
+        const data = JSON.stringify(state.results, null, 2);
+        navigator.clipboard.writeText(data).then(() => {
+          alert('Copied to clipboard!');
+        });
+      });
+      
+      document.getElementById('resetAll').addEventListener('click', () => {
+        if (confirm('Reset all test results?')) {
+          state.results = {
+            mos: null,
+            cmos: null,
+            ab: null,
+            abx: null,
+            mushra: null,
+            bestWorst: null
+          };
+          state.selections = {
+            mos: null,
+            cmos: null,
+            ab: null,
+            abx: null,
+            mushra: {},
+            bwBest: null,
+            bwWorst: null
+          };
+          
+          // Reset UI
+          document.querySelectorAll('.scale-btn, .choice-btn, .best-btn, .worst-btn').forEach(b => b.classList.remove('selected'));
+          document.querySelectorAll('.bw-item').forEach(i => i.classList.remove('best', 'worst'));
+          document.querySelectorAll('.status-badge').forEach(s => {
+            s.textContent = 'Not completed';
+            s.className = 'status-badge pending';
+          });
+          
+          updateResultsDisplay();
+        }
+      });
+    }
+
+    function updateResultsDisplay() {
+      const display = document.getElementById('resultsJson');
+      display.textContent = JSON.stringify(state.results, null, 2);
+    }
+  </script>
+</body>
+</html>
